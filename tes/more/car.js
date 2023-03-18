@@ -1,8 +1,9 @@
 CONSOLE.Object('car',{
-	x:CONSOLE.canvasSetting.width/2,y:CONSOLE.canvasSetting.height/2,rotationSpeed:2.0,speed:70,breakSpeed:40,normalSpeed:70,
+	x:CONSOLE.canvasSetting.width/2,y:CONSOLE.canvasSetting.height/2,rotationSpeed:2,speed:0,breakSpeed:40,normalSpeed:100,
 	normalSpeedRotation:1,rotationBreak:3,steerRotation:0,rotationDiff:0,
 	steerRotateBackSpeed:2,carRotating:false,rotationDiffMaxLeft:-100,rotationDiffMaxRight:100,
-	width:15,height:20,audios:CONSOLE.audio({src:'./more/media/background2.mp3'}),collideLen:0,
+	width:10,height:25,audios:CONSOLE.audio({src:'./more/media/background2.mp3'}),collideLen:0,
+	camera:{x:0,y:0,speed:5},dollarCount:0,humanCount:0,
 	input(){
 		const gobreak = ()=>{
 			this.audios.volume = 0.2;
@@ -38,6 +39,8 @@ CONSOLE.Object('car',{
 			y:this.engine.canvas.height/2,width:50,height:50
 		};
 		this.distance = this.engine.assets.img.distance;
+		this.particles = CONSOLE.particles({acceL:1.1,lifeTime:15,initLifeTime:15,x:this.x,y:this.y,engine:this.engine,parent:this.id});
+		this.particles.init();
 	},
 	update(){
 		if(!this.engine.play)return;
@@ -46,14 +49,29 @@ CONSOLE.Object('car',{
 		this.touchRotation();
 		this.rotateCarBySteer();
 		this.polly = CONSOLE.rectanglePolly(this.x,this.y,this.width,this.height,this.rotation*Math.PI/180);
-		if(this.collideLen>=10){
-			this.engine.stop();
-			alert('You lose the game!');
-			location.reload();
-		}
+		//endgamecondition.
+		this.checkEndGame();
 		this.distances += 0.1;
+		this.particles.update();
+		this.move();
+	},
+	checkEndGame(){
+		if(this.collideLen>=10){
+			this.engine.play = false;
+			this.engine.object.gameEndScene.show(this.distances);
+		}
+	},
+	move(){
+		const movementx = Math.sin(this.rotation*Math.PI/180)*this.speed*this.engine.dt;
+		const movementy = Math.cos(this.rotation*Math.PI/180)*this.speed*this.engine.dt;
+		this.x += movementx;
+		this.y -= movementy;
+		this.engine.viewport.y += movementy;
+		this.engine.viewport.x -= movementx;
+		//console.log(this.engine.viewport.y);
 	},
 	draw(){
+		this.particles.draw();
 		this.drawCar();
 		this.drawSteer();
 		this.drawBreak();
@@ -62,17 +80,27 @@ CONSOLE.Object('car',{
 	drawCar(){
 		this.engine.g.save();
 		this.rotate();
-		this.engine.g.rect(0,0,this.width,this.height,'lightgray');
-		this.engine.g.rect(0,-15,15,10,'black');
-		this.engine.g.rect(0,-1,10,15,'gray');
-		this.engine.g.rect(0,-19,12,2,'gray');
+		this.engine.g.rect(0,0,this.width,this.height,'red');
+		//wheel
+		this.engine.g.rect(this.width/2+2,-this.height/4,2,4,'black');
+		this.engine.g.rect(-this.width/2-2,-this.height/4,2,4,'black');
+		this.engine.g.rect(this.width/2+2,this.height/4,2,4,'black');
+		this.engine.g.rect(-this.width/2-2,this.height/4,2,4,'black');
+		this.engine.g.rect(0,this.height/2-2,12,5,'black');
+		this.engine.g.rect(0,-1,7,14,'black');
+		this.engine.g.rect(0,0,7,7,'white');
 		this.engine.g.restore();
 	},
 	distances:0,
 	drawDistance(){
-		this.engine.g.rect(this.engine.canvas.width*2/8,30,120,40);
-		this.engine.g.putImage(this.distance,this.engine.canvas.width*1/8,30,30,30);
-		this.engine.g.text(Math.round(this.distances),this.engine.canvas.width*2/8,40,{
+		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30-this.engine.viewport.y,0.9*this.engine.canvas.width+1,41,'black');
+		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30-this.engine.viewport.y,0.9*this.engine.canvas.width,40);
+		this.engine.g.putImage(this.distance,this.engine.canvas.width*8/10-this.engine.viewport.x,30-this.engine.viewport.y,30,30);
+		this.engine.g.text(Math.round(this.distances),this.engine.canvas.width*6.5/10-this.engine.viewport.x,40-this.engine.viewport.y,{
+			font:'25px Arial',fillStyle:'black',textAlign:'center'
+		});
+		this.engine.g.putImage(this.engine.assets.img.dollar,this.engine.canvas.width*2/10-this.engine.viewport.x,30-this.engine.viewport.y,30,30);
+		this.engine.g.text(Math.round(this.dollarCount),this.engine.canvas.width*3.5/10-this.engine.viewport.x,40-this.engine.viewport.y,{
 			font:'25px Arial',fillStyle:'black',textAlign:'center'
 		});
 	},
@@ -81,9 +109,9 @@ CONSOLE.Object('car',{
 		this.rotation = Math.atan(Math.sqrt(newVector.x**2+newVector.y**2)/newVector.y)*180/Math.PI-25;
 	},
 	drawSteer(){
-		this.engine.g.circle(this.x,this.engine.canvas.height*3/4,80,'white');
+		this.engine.g.circle(this.steerPos.x-this.engine.viewport.x,this.engine.canvas.height*3/4-this.engine.viewport.y,80,'white');
 		this.engine.g.save();
-		this.engine.g.rotateObject({x:this.steerPos.x,y:this.steerPos.y},this.steerRotation);
+		this.engine.g.rotateObject({x:this.steerPos.x-this.engine.viewport.x,y:this.steerPos.y-this.engine.viewport.y},this.steerRotation);
 		this.engine.g.putImage(this.steer,0,0,150,150);
 		this.engine.g.restore();
 	},
@@ -103,8 +131,8 @@ CONSOLE.Object('car',{
 		}
 	},
 	drawBreak(){
-		this.engine.g.rect(this.break.x,this.break.y,this.break.width+5,this.break.height+10);
-		this.engine.g.putImage(this.break.img,this.break.x,this.break.y,this.break.width,this.break.height);
+		this.engine.g.rect(this.break.x-this.engine.viewport.x,this.break.y-this.engine.viewport.y,this.break.width+5,this.break.height+10);
+		this.engine.g.putImage(this.break.img,this.break.x-this.engine.viewport.x,this.break.y-this.engine.viewport.y,this.break.width,this.break.height);
 	},
 	touchRotation(){
 		let newestTouch,touchX,touchY;
@@ -134,12 +162,7 @@ CONSOLE.Object('car',{
 	rotateCarBySteer(){
 		this.rotation += this.steerRotation*.03;
 	},
-	collisionDetect(){
-		const data = this.engine.g.getImageData(0,0,this.engine.canvasSetting.width,this.engine.canvasSetting.height);
-		return data;
-	},
 	collide(){
-		this.drawPolly();
 		this.collideLen += 1;
 	}
 });

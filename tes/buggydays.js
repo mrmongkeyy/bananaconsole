@@ -24,6 +24,21 @@ const config = {
 			id:'break',
 			type:'img',
 			src:'./more/media/breaking.png'
+		},
+		{
+			id:'rook',
+			type:'img',
+			src:'./more/media/obstacle.png'
+		},
+		{
+			id:'human',
+			type:'img',
+			src:'./more/media/human.png'
+		},
+		{
+			id:'dollar',
+			type:'img',
+			src:'./more/media/dollar.png'
 		}
 	],
 }

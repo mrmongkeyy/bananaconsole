@@ -32,7 +32,7 @@ const getIntersection = function(a,b,c,d){
 	const t = top/bottom;
 	if(t<=1 && t>=0)
 		return {x:lerp(a.x,b.x,t),y:lerp(a.y,b.y,t),t}
-	return null;
+	return false;
 }
 
 class consolE{
@@ -48,6 +48,7 @@ class consolE{
 		img:{},//filled with {object}.
 		audio:{}
 	};
+	viewport = {x:0,y:0};
 	touches = {};
 	constructor(config){
 		Object.assign(this,config);
@@ -71,33 +72,34 @@ class consolE{
 		//give core css style to the game.
 		document.head.appendChild(this.makeElement({el:'link',props:{href:'../more/console.style.css',rel:'stylesheet'}}));
 		//
-		for(let i in this.object){
-			if(this.object[i].init){
-				if(!this.object[i].engine)this.object[i].engine = this;
-				this.object[i].init();
+		this.object.forEach((obj)=>{
+			if(obj.init){
+				if(!obj.engine)obj.engine = this;
+				obj.init();
 			}
-		}
+		})
 	}
 	update(){
-		for(let i in this.object){
-			if(this.object[i].update && !this.object[i].delete){
-				if(!this.object[i].engine)this.object[i].engine = this;
-				this.object[i].update();
+		this.object.forEach((obj)=>{
+			if(obj.update && !obj.delete){
+				if(!obj.engine)obj.engine = this;
+				obj.update();
 			}
-		}
+		})
 	}
 	draw(){
 		this.cls(this.canvasSetting.backgroundColor);
-		for(let i in this.object){
-			if(this.object[i].draw && !this.object[i].delete){
-				if(!this.object[i].engine)this.object[i].engine = this;
-				this.object[i].draw();
+		this.object.forEach((obj)=>{
+			if(obj.draw && !obj.delete){
+				if(!obj.engine)obj.engine = this;
+				obj.draw();
 			}
-		}
+		})
 	}
 	cls(color){
+		this.g.reset();
+		this.g.translate(this.viewport.x,this.viewport.y);
 		this.g.fillStyle = color||'white';
-		this.g.fillRect(0,0,this.canvas.width,this.canvas.height);
 	}
 	process = () =>{
 		this.getDelta();
@@ -159,12 +161,14 @@ class consolE{
 	Object(id,config){
 		this.object[id] = Object.assign({
 			x:0,y:0,width:10,height:10,delete:false,
-			init(){},update(){},draw(){},
+			init(){},update(){},draw(){},id,
 			clicked(otObject){
 				if(this.engine.mouseDown || this.engine.touches.length>0){
 					const mouse = this.engine.mouse||{x:this.engine.touches[0].pageX,y:this.engine.touches[this.engine.touches.length-1].pageY};
 					let npos;
 					if(otObject){
+						if(!otObject.width && otObject.w)otObject.width = otObject.w;
+						if(!otObject.height && otObject.h)otObject.height = otObject.h;
 						npos = this.normalizePos2Canvas(otObject);
 						if(
 							(npos.x-otObject.width/2)<mouse.x&&
@@ -265,6 +269,9 @@ class consolE{
 				Object.assign(this,optional);
 				this.fillText(text,x,y);
 				//else this.strokeText(text,x,y);
+			},
+			box(x,y,w,h){
+				
 			}
 		}
 	}
@@ -348,6 +355,68 @@ class consolE{
 			y:ypos-Math.cos(Math.PI+rotation+alpha)*radius
 		});
 		return points;
+	}
+	particles(optional={}){
+		return Object.assign({
+			x:0,y:0,engine:null,parent:null,
+			shapes:[],len:1,lifeTime:15,speed:12,initLifeTime:15,
+			width:5,height:5,color:'gray',acceL:1,
+			beforeShape(){},afterShape(){},shapeOption:{},
+			init(){
+				this.beforeShape();
+				forIn(this.len,()=>{
+					this.shapes.push(this.makeShape());
+				});
+				this.afterShape();
+				this.shapes.forEach(shape=>{
+					if(shape.init)shape.init();
+				})
+			},
+			update(){
+				this.shapes.forEach(shape=>{
+					shape.update();
+				})
+			},
+			draw(){
+				this.shapes.forEach(shape=>{
+					shape.draw();
+				})
+			},
+			makeShape(){
+				return Object.assign({
+					parent:this.parent,
+					x:this.x,initX:this.x,initY:this.y,y:this.y,engine:this.engine,speed:this.speed,
+					w:this.width,h:this.height,color:this.color,
+					velocity:{x:0,y:0},acceL:this.acceL,lifeTime:this.lifeTime,initLifeTime:this.initLifeTime,
+					update(){
+						this.move();
+						if(this.lifeTime<=0){
+							this.y = this.engine.object[this.parent].y;
+							this.x = this.engine.object[this.parent].x;
+							this.velocity = vector2();
+							this.lifeTime = this.initLifeTime;
+						}
+						this.lifeTime--;
+					},
+					draw(){
+						this.engine.g.rect(this.x,this.y,this.w,this.h,this.color);
+					},
+					move(){
+						this.velocity.x += this.acceL;
+						this.velocity.y += this.acceL;
+						this.x -= Math.sin(getRad(this.engine.object[this.parent].rotation))*this.velocity.x*this.engine.dt*this.speed;
+						this.y += Math.cos(getRad(this.engine.object[this.parent].rotation))*this.velocity.y*this.engine.dt*this.speed;
+					}
+				},this.shapeOption);
+			}
+		},optional);
+	}
+	isInView(vectorPosition){
+		if(
+			vectorPosition.x>=this.viewport.x && vectorPosition.x<=-(this.viewport.x)+this.canvas.width&&
+			vectorPosition.y>=this.viewport.y && vectorPosition.y<=-(this.viewport.y)+this.canvas.height
+		)return true;
+		return false;
 	}
 }
 
