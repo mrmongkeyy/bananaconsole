@@ -3,7 +3,9 @@ CONSOLE.Object('car',{
 	normalSpeedRotation:1,rotationBreak:3,steerRotation:0,rotationDiff:0,
 	steerRotateBackSpeed:2,carRotating:false,rotationDiffMaxLeft:-100,rotationDiffMaxRight:100,
 	width:10,height:25,audios:CONSOLE.audio({src:'./more/media/background2.mp3'}),collideLen:0,
-	camera:{x:0,y:0,speed:5},dollarCount:0,humanCount:0,
+	dollarCount:localStorage['irgame']?JSON.parse(localStorage['irgame']).dollar||0:0,
+	humanCount:localStorage['irgame']?JSON.parse(localStorage['irgame']).human||0:0,
+	coinSound:CONSOLE.audio({src:'./more/media/coins.mp3'}),
 	input(){
 		const gobreak = ()=>{
 			this.audios.volume = 0.2;
@@ -46,7 +48,7 @@ CONSOLE.Object('car',{
 		if(!this.engine.play)return;
 		this.input();
 		this.updateSteeringRotation();
-		this.touchRotation();
+		this.rotationSet();
 		this.rotateCarBySteer();
 		this.polly = CONSOLE.rectanglePolly(this.x,this.y,this.width,this.height,this.rotation*Math.PI/180);
 		//endgamecondition.
@@ -55,10 +57,15 @@ CONSOLE.Object('car',{
 		this.particles.update();
 		this.move();
 	},
+	rotationSet(){
+		//if(navigator.userAgentData.mobile)this.steerRotation = this.engine.deviceAngle;
+		this.touchRotation();
+	},
 	checkEndGame(){
 		if(this.collideLen>=10){
 			this.engine.play = false;
 			this.engine.object.gameEndScene.show(this.distances);
+			localStorage['irgame'] = JSON.stringify({dollar:this.dollarCount||0,human:this.humanCound||0});
 		}
 	},
 	move(){
@@ -66,15 +73,16 @@ CONSOLE.Object('car',{
 		const movementy = Math.cos(this.rotation*Math.PI/180)*this.speed*this.engine.dt;
 		this.x += movementx;
 		this.y -= movementy;
-		this.engine.viewport.y += movementy;
+		this.engine.viewport.y -= movementy;
 		this.engine.viewport.x -= movementx;
-		//console.log(this.engine.viewport.y);
 	},
 	draw(){
 		this.particles.draw();
 		this.drawCar();
+		//if(navigator.userAgentData?!navigator.userAgentData.mobile){
 		this.drawSteer();
 		this.drawBreak();
+		//}
 		this.drawDistance();
 	},
 	drawCar(){
@@ -93,14 +101,14 @@ CONSOLE.Object('car',{
 	},
 	distances:0,
 	drawDistance(){
-		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30-this.engine.viewport.y,0.9*this.engine.canvas.width+1,41,'black');
-		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30-this.engine.viewport.y,0.9*this.engine.canvas.width,40);
-		this.engine.g.putImage(this.distance,this.engine.canvas.width*8/10-this.engine.viewport.x,30-this.engine.viewport.y,30,30);
-		this.engine.g.text(Math.round(this.distances),this.engine.canvas.width*6.5/10-this.engine.viewport.x,40-this.engine.viewport.y,{
+		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30+this.engine.viewport.y,0.9*this.engine.canvas.width+1,41,'black');
+		this.engine.g.rect(this.engine.canvas.width/2-this.engine.viewport.x,30+this.engine.viewport.y,0.9*this.engine.canvas.width,40);
+		this.engine.g.putImage(this.distance,this.engine.canvas.width*8/10-this.engine.viewport.x,30+this.engine.viewport.y,30,30);
+		this.engine.g.text(Math.round(this.distances),this.engine.canvas.width*6.5/10-this.engine.viewport.x,40+this.engine.viewport.y,{
 			font:'25px Arial',fillStyle:'black',textAlign:'center'
 		});
-		this.engine.g.putImage(this.engine.assets.img.dollar,this.engine.canvas.width*2/10-this.engine.viewport.x,30-this.engine.viewport.y,30,30);
-		this.engine.g.text(Math.round(this.dollarCount),this.engine.canvas.width*3.5/10-this.engine.viewport.x,40-this.engine.viewport.y,{
+		this.engine.g.putImage(this.engine.assets.img.dollar,this.engine.canvas.width*2/10-this.engine.viewport.x,30+this.engine.viewport.y,30,30);
+		this.engine.g.text(Math.round(this.dollarCount),this.engine.canvas.width*3.5/10-this.engine.viewport.x,40+this.engine.viewport.y,{
 			font:'25px Arial',fillStyle:'black',textAlign:'center'
 		});
 	},
@@ -109,9 +117,9 @@ CONSOLE.Object('car',{
 		this.rotation = Math.atan(Math.sqrt(newVector.x**2+newVector.y**2)/newVector.y)*180/Math.PI-25;
 	},
 	drawSteer(){
-		this.engine.g.circle(this.steerPos.x-this.engine.viewport.x,this.engine.canvas.height*3/4-this.engine.viewport.y,80,'white');
+		this.engine.g.circle(this.steerPos.x-this.engine.viewport.x,this.engine.canvas.height*3/4+this.engine.viewport.y,80,'white');
 		this.engine.g.save();
-		this.engine.g.rotateObject({x:this.steerPos.x-this.engine.viewport.x,y:this.steerPos.y-this.engine.viewport.y},this.steerRotation);
+		this.engine.g.rotateObject({x:this.steerPos.x-this.engine.viewport.x,y:this.steerPos.y+this.engine.viewport.y},this.steerRotation);
 		this.engine.g.putImage(this.steer,0,0,150,150);
 		this.engine.g.restore();
 	},
@@ -131,12 +139,12 @@ CONSOLE.Object('car',{
 		}
 	},
 	drawBreak(){
-		this.engine.g.rect(this.break.x-this.engine.viewport.x,this.break.y-this.engine.viewport.y,this.break.width+5,this.break.height+10);
-		this.engine.g.putImage(this.break.img,this.break.x-this.engine.viewport.x,this.break.y-this.engine.viewport.y,this.break.width,this.break.height);
+		this.engine.g.rect(this.break.x-this.engine.viewport.x,this.break.y+this.engine.viewport.y,this.break.width+5,this.break.height+10);
+		this.engine.g.putImage(this.break.img,this.break.x-this.engine.viewport.x,this.break.y+this.engine.viewport.y,this.break.width,this.break.height);
 	},
 	touchRotation(){
 		let newestTouch,touchX,touchY;
-		if(this.engine.touches.length>0){
+		if(this.engine.touches !=null && this.engine.touches.length>0){
 			newestTouch = this.engine.touches[this.engine.touches.length-1];
 			touchX = newestTouch.pageX;
 			touchY = newestTouch.pageY;

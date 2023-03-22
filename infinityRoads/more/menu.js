@@ -6,7 +6,7 @@ CONSOLE.Object('menu',{
 			color:'RGB(255,255,255,1)',width:CONSOLE.canvasSetting.width*0.9,height:CONSOLE.canvas.height*0.3
 		};
 		this.button = {
-			x:this.box.x,y:this.box.y+20,
+			x:this.box.x,y:this.box.y,
 			width:125,height:50,
 		};
 		this.buttonClear = {
@@ -34,19 +34,19 @@ CONSOLE.Object('menu',{
 	},
 	drawTitle(){
 		this.engine.g.text('"THE INFINITY ROADS"',this.box.x,this.box.y-50,{
-			font:'25px Monospace',fillStyle:'black',textAlign:'center'
+			font:`${(this.engine.canvas.width*0.075<20)?this.engine.canvas.width*0.075:20}px Monospace`,fillStyle:'black',textAlign:'center'
 		});
 	},
 	drawButton(){
-		this.engine.g.rect(this.button.x,this.button.y-20,this.button.width,this.button.height,'black');
+		this.engine.g.rect(this.button.x,this.button.y,this.button.width,this.button.height,'black');
 		this.engine.g.text('PLAY',this.box.x,this.box.y+13,{
-			font:'40px Monospace',fillStyle:'white',textAlign:'center'
+			font:`40px Monospace`,fillStyle:'white',textAlign:'center'
 		});
 		this.engine.g.text('INFINITYDREAMS, 2023.',this.box.x,this.box.y+63,{
-			font:'16px Monospace',fillStyle:'black',textAlign:'center'
+			font:`${this.engine.canvas.width*0.05<15?this.engine.canvas.width*0.05:15}px Monospace`,fillStyle:'black',textAlign:'center'
 		});
 		this.engine.g.text('Powered By BananaConsole.',this.box.x,this.box.y+80,{
-			font:'16px Monospace',fillStyle:'black',textAlign:'center'
+			font:`${this.engine.canvas.width*0.05<15?this.engine.canvas.width*0.05:15}px Monospace`,fillStyle:'black',textAlign:'center'
 		});
 			
 	}

@@ -42,7 +42,7 @@ class consolE{
 		width:100,height:100,
 		backgroundColor:'white'
 	}
-	maxDelta = 0.03; 
+	maxDelta = 0.06; 
 	object = {};
 	assets = {
 		img:{},//filled with {object}.
@@ -97,9 +97,13 @@ class consolE{
 		})
 	}
 	cls(color){
-		this.g.reset();
-		this.g.translate(this.viewport.x,this.viewport.y);
-		this.g.fillStyle = color||'white';
+		if(this.g.reset)this.g.reset();
+		else{
+			this.g.resetTransform();
+			this.g.clearRect(0,0,this.canvas.width,this.canvas.height);
+		}
+		//translate methode use normal coordinat.
+		this.g.translate(this.viewport.x,-this.viewport.y);
 	}
 	process = () =>{
 		this.getDelta();
@@ -141,18 +145,25 @@ class consolE{
 		}
 		document.ontouchstart = (e)=>{
 			this.touches = e.touches;
+			this.touchDown = true;
 		}
 		document.ontouchend = (e)=>{
 			this.touches = e.touches;
+			this.touchDown = false;
 		}
 		document.ontouchmove = (e)=>{
 			this.touches = e.touches;
+			this.isMouse = false;
 		}
 		document.onmousemove = (e)=>{
 			this.mouse = e;
+			this.isMouse = true;
+		}
+		screen.orientation.onchange = (e)=>{
+			this.deviceAngle = e.target.angle;
 		}
 	}
-	click
+	click;
 	getDelta(){
 		const time = Date.now();
 		this.dt = (time-this.prevtime)/1000;
@@ -234,7 +245,7 @@ class consolE{
 			el:'canvas',props:this.canvasSetting
 		});
 		this.g = this.canvas.getContext('2d');
-		Object.assign(this.g,this.console.g)
+		Object.assign(this.g,this.console.g);
 		document.body.appendChild(this.canvas);
 	}
 	console = {
@@ -272,7 +283,8 @@ class consolE{
 			},
 			box(x,y,w,h){
 				
-			}
+			},
+			imageSmoothingEnabled:true,
 		}
 	}
 	audio(config){
@@ -281,15 +293,20 @@ class consolE{
 			init(){
 				this.one = new Audio();
 				this.one.src = this.config.src;
+				if(config.autoplay)this.one.autoplay = true;
 				this.two = new Audio();
 				this.two.src = this.config.src;
 				this.playAble = 'one';
 				return this;
 			},
 			play(){
+				if(!this.stoped)this.stop();
 				const cAudio = this[this.playAble];
 				cAudio.play();
 				this.stoped = false;
+				cAudio.onfinish = ()=>{
+					this.stopped = true;
+				}
 				if(this.useInterval)this.intervalUpdate();
 			},
 			update(){
@@ -329,9 +346,13 @@ class consolE{
 	audios = [];
 	getMouseCanvasOrigin(){
 		return {
-			x:this.mouse.x+this.canvas.offsetLeft,
-			y:this.mouse.y+this.canvas.offsetTop
+			x:this.mouse.x-this.canvas.offsetLeft,
+			y:this.mouse.y-this.canvas.offsetTop
 		}
+	}
+	getTouchCanvasOrigin(){
+		if(this.touches.length<0)return vector2(this.canvas.width/2,this.canvas.height/2);
+		return vector2(this.touches[0].pageX-this.canvas.offsetLeft,this.touches[0].pageY-this.canvas.offsetTop);
 	}
 	rectanglePolly(xpos,ypos,w,h,rotation){
 		rotation *= -1;
@@ -386,7 +407,7 @@ class consolE{
 				return Object.assign({
 					parent:this.parent,
 					x:this.x,initX:this.x,initY:this.y,y:this.y,engine:this.engine,speed:this.speed,
-					w:this.width,h:this.height,color:this.color,
+					w:this.width,h:this.height,color:this.color,dW:this.width,dH:this.height,
 					velocity:{x:0,y:0},acceL:this.acceL,lifeTime:this.lifeTime,initLifeTime:this.initLifeTime,
 					update(){
 						this.move();
@@ -395,7 +416,11 @@ class consolE{
 							this.x = this.engine.object[this.parent].x;
 							this.velocity = vector2();
 							this.lifeTime = this.initLifeTime;
+							this.w = this.dW;
+							this.h = this.dH;
 						}
+						this.w += .4;
+						this.h += .4;
 						this.lifeTime--;
 					},
 					draw(){

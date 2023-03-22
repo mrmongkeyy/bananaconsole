@@ -1,8 +1,7 @@
 const config = {
 	canvasSetting:{
-		width:innerWidth/4,
+		width:innerWidth/2,
 		height:innerHeight-50,
-		backgroundColor:'yellow'
 	},
 	toLoad:[
 		{
@@ -28,12 +27,7 @@ const config = {
 		{
 			id:'rook',
 			type:'img',
-			src:'./more/media/obstacle.png'
-		},
-		{
-			id:'human',
-			type:'img',
-			src:'./more/media/human.png'
+			src:'./more/media/rock.png'
 		},
 		{
 			id:'dollar',

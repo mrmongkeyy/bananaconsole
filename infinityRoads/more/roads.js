@@ -4,7 +4,7 @@ CONSOLE.Object('roads',{
 		{x:CONSOLE.canvasSetting.width/2-65,y:CONSOLE.canvasSetting.height*2/3-200},
 		{x:CONSOLE.canvasSetting.width/2-65,y:CONSOLE.canvasSetting.height*2/3-300}
 	],stuffRadLimit:30,
-	length:1000,roadWidth:200,roadSegment:1,roadIndex:0,stuffs:[0,1,2],stuffColor:[{name:'dollar',size:15,RadLimit:20},{name:'rook',size:30,RadLimit:15},{name:'human',size:50,RadLimit:10}],
+	length:100,roadWidth:200,roadSegment:1,roadIndex:0,stuffColor:[{name:'dollar',size:15,RadLimit:20},{name:'rook',size:50,RadLimit:30}],
 	buildRoads(){
 		for(let i=this.roadIndex;i<this.length;i++){
 			const y = (i+1)*(-100);
@@ -21,7 +21,6 @@ CONSOLE.Object('roads',{
 	},
 	update(){
 		if(!this.engine.play)return;
-		//this.car = this.engine.object.car;
 	},
 	move(i){
 		return;
@@ -37,6 +36,7 @@ CONSOLE.Object('roads',{
 			engine:this.engine,
 			dollar(){
 				this.engine.object.car.dollarCount += 1;
+				this.engine.object.car.coinSound.play();
 			}
 		}
 		if(xevent[name])xevent[name]();
@@ -53,10 +53,10 @@ CONSOLE.Object('roads',{
 				this.collideStuffHandler(name);
 			}
 		}
-		this.engine.g.circle(cpos.x,cpos.y,15,'lightgray');
-		this.engine.g.circle(cpos.x+this.roadWidth,cpos.y,15,'lightgray');
-		this.engine.g.circle(cpos.x,cpos.y,10,'black');
-		this.engine.g.circle(cpos.x+this.roadWidth,cpos.y,10,'black');
+		this.engine.g.circle(cpos.x,cpos.y,10,'lightgray');
+		this.engine.g.circle(cpos.x+this.roadWidth,cpos.y,10,'lightgray');
+		this.engine.g.circle(cpos.x,cpos.y,5,'black');
+		this.engine.g.circle(cpos.x+this.roadWidth,cpos.y,5,'black');
 	},
 	draw(){
 		for(let i=0;i<this.roads.length;i++){
@@ -74,8 +74,8 @@ CONSOLE.Object('roads',{
 			if(i!==this.roads.length-1){
 				if(this.drawAble(i)){
 					npos = this.roads[i+1];
-					this.engine.g.line(cpos.x,cpos.y,npos.x,npos.y,'black',10);
-					this.engine.g.line(cpos.x+this.roadWidth,cpos.y,npos.x+this.roadWidth,npos.y,'black',10);
+					this.engine.g.line(cpos.x,cpos.y,npos.x,npos.y,'black',8);
+					this.engine.g.line(cpos.x+this.roadWidth,cpos.y,npos.x+this.roadWidth,npos.y,'black',8);
 					this.buildCircle(cpos,i);
 					this.buildCircle(npos,i);
 
@@ -91,12 +91,19 @@ CONSOLE.Object('roads',{
 						}
 					}
 				}
-			}else this.buildCircle(cpos);
+			}else{
+				this.buildCircle(cpos);
+				//win condition.
+				if(this.car.y <= cpos.y){
+					this.engine.play = false;
+					this.engine.object.winMenu.delete = false;
+				}
+			}
 			this.move(i);
 		}
 	},
 	drawAble(i){
-		if(this.roads[i].y > -(this.engine.viewport.y)+100 && this.roads[i].y < -(this.engine.viewport.y)+this.engine.canvas.height)return true;
+		if(this.roads[i].y > (this.engine.viewport.y)+100 && this.roads[i].y < (this.engine.viewport.y)+this.engine.canvas.height)return true;
 		return false;
 	},
 });

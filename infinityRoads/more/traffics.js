@@ -16,7 +16,7 @@ CONSOLE.Object('traffics',{
 		this.roads.forEach((point,i)=>{
 			//point {x,y}.
 			if(i>3){
-				let put = 1//this.personalities.getRandom();
+				let put = 1;//this.personalities.getRandom();
 				if(put){
 					this.cars.push(this.newCars(point,i));
 				}
@@ -80,7 +80,7 @@ CONSOLE.Object('traffics',{
 				if(this.y < this.roads[this.roadI+1].y)this.roadI += 1;
 			},
 			drawAble(){
-				if(this.y > -(this.engine.viewport.y) && this.y < -(this.engine.viewport.y)+this.engine.canvas.height)return true;
+				if(this.y > (this.engine.viewport.y)+100 && this.y < (this.engine.viewport.y)+this.engine.canvas.height)return true;
 				return false;
 			}
 		}

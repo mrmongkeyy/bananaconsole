@@ -63,3 +63,6 @@ const transformV = function(v1,v2){
 const getMagnitude = function(vector){
 	return Math.hypot(vector.x,vector.y);
 }
+const random = function(len,min=0){
+	return Math.floor(Math.random()*len)+min;
+}
