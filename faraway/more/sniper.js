@@ -20,7 +20,7 @@ CONSOLE.Object('sniper',{
 		this.drawText();
 	},
 	drawText(){
-		this.engine.g.text((this.bestPoint.length>4)?this.bestPoint.slice(0,3):this.bestPoint,this.x,this.y-30,{
+		this.engine.g.text(`Precition: ${(this.bestPoint.length>4)?this.bestPoint.slice(0,4)+'%':this.bestPoint}`,this.x,this.y-30,{
 			fillStyle:'red',font:'20px Monospace',textAlign:'center'
 		})
 	},
@@ -65,7 +65,7 @@ CONSOLE.Object('sniper',{
 				bird.down = true;
 				this.engine.object.ui.Info.score += Math.ceil((this.radMaxTarget-r)*10);
 				this.engine.object.ui.Info.onTarget += 1;
-				this.bestPoint = String(r);
+				this.bestPoint = String((this.radMaxTarget-r)/this.radMaxTarget*100);
 				targetIn = true;
 			}else if(i===this.engine.object.bird.birds.length-1&&!targetIn){
 				this.bestPoint = 'MISS';
