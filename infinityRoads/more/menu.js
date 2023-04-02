@@ -20,7 +20,7 @@ CONSOLE.Object('menu',{
 			this.delete = true;
 			this.engine.play = true;
 			this.engine.object.car.audios.useInterval = true;
-			this.engine.object.car.audios.play();
+			//this.engine.object.car.audios.play();
 		}
 	},
 	draw(){
